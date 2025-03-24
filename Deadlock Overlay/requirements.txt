@@ -1,4 +1,0 @@
-#list of dependencies
-
-PySimpleGUI
-screeninfo
