@@ -1,36 +1,52 @@
-
 import tkinter as tk
 
 def select_region():
     region = {}
 
     def on_mouse_down(event):
-        region['start_x'] = root.winfo_pointerx()
-        region['start_y'] = root.winfo_pointery()
+        region['start_x'] = selector.winfo_pointerx()
+        region['start_y'] = selector.winfo_pointery()
         canvas.coords(rect, region['start_x'], region['start_y'],
                       region['start_x'], region['start_y'])
 
     def on_mouse_drag(event):
-        x, y = root.winfo_pointerx(), root.winfo_pointery()
+        x, y = selector.winfo_pointerx(), selector.winfo_pointery()
         canvas.coords(rect, region['start_x'], region['start_y'], x, y)
 
     def on_mouse_up(event):
-        x1, y1, x2, y2 = canvas.coords(rect)
+        print("[DEBUG] Mouse released.")
+        coords = canvas.coords(rect)
+        print(f"[DEBUG] Rectangle coords: {coords}")
+        if len(coords) != 4:
+            print("[ERROR] Unexpected number of coordinates returned.")
+            selector.destroy()
+            return
+
+        x1, y1, x2, y2 = coords
+
+        if x1 == x2 or y1 == y2:
+            print("[DEBUG] Region was not drawn — zero width or height.")
+            selector.destroy()
+            return
+
         region.update({
             'left': int(min(x1, x2)),
             'top': int(min(y1, y2)),
             'width': int(abs(x2 - x1)),
             'height': int(abs(y2 - y1))
         })
-        root.destroy()
+        print(f"[DEBUG] Region finalized: {region}")
+        selector.quit()
 
-    root = tk.Tk()
-    root.attributes("-fullscreen", True)
-    root.attributes("-alpha", 0.3)
-    root.configure(bg='black')
-    root.title("Select region")
+    print("[DEBUG] Starting region selector...")
 
-    canvas = tk.Canvas(root, bg="black", highlightthickness=0)
+    selector = tk.Tk()
+    selector.attributes("-fullscreen", True)
+    selector.attributes("-alpha", 0.3)
+    selector.configure(bg='black')
+    selector.title("Select region")
+
+    canvas = tk.Canvas(selector, bg="black", highlightthickness=0)
     canvas.pack(fill=tk.BOTH, expand=True)
 
     rect = canvas.create_rectangle(0, 0, 0, 0, outline="red", width=2, fill="red")
@@ -39,5 +55,12 @@ def select_region():
     canvas.bind("<B1-Motion>", on_mouse_drag)
     canvas.bind("<ButtonRelease-1>", on_mouse_up)
 
-    root.mainloop()
-    return region if 'left' in region else None
+    selector.mainloop()
+    selector.destroy()
+
+    print(f"[DEBUG] Region after selector close: {region}")
+    if all(k in region for k in ('left', 'top', 'width', 'height')):
+        return region
+    else:
+        print("[DEBUG] No region was returned.")
+        return None

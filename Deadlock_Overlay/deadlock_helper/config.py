@@ -14,10 +14,23 @@ def load_region():
             print(f"Error loading region config: {e}")
     return None
 
+
 def save_region(region):
     try:
+        if not region:
+            print("[DEBUG] Empty region, removing config file.")
+            if os.path.exists(CONFIG_FILE):
+                os.remove(CONFIG_FILE)
+            return
+
+        print("[DEBUG] Saving region to:", CONFIG_FILE)
         os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
+
         with open(CONFIG_FILE, "w") as f:
             json.dump(region, f, indent=4)
+
+        print("[DEBUG] Region successfully written to config.json")
     except Exception as e:
-        print(f"Error saving region config: {e}")
+        print("[ERROR] Failed to save region:", e)
+
+    
